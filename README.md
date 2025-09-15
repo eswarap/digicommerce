@@ -7,7 +7,7 @@ Multi-module Gradle project containing four Spring Boot microservices.
 - **orchestration-service** (port 8083) - Orchestrates calls between user and order services
 - **user-service** (port 8081) - Manages user data
 - **order-service** (port 8082) - Manages order data
-- **token-service** (port 8080) - Handles JWT authentication
+- **token-service** (port 8090) - Handles JWT authentication
 
 ## Build & Run
 

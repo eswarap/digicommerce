@@ -12,8 +12,8 @@ Spring Boot service that orchestrates calls to User Service and Order Service.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/orchestration/user/{userId}/orders` | Get user and their orders by user ID |
-| GET | `/api/orchestration/username/{username}/orders` | Get user and their orders by username |
+| GET | `/orchest.svc/api/v1/orchestration/user/{userId}/orders` | Get user and their orders by user ID |
+| GET | `/orchest.svc/api/v1/orchestration/username/{username}/orders` | Get user and their orders by username |
 
 ## Running
 
@@ -31,10 +31,10 @@ Start the dependent services:
 
 ```bash
 # Get user orders by ID
-curl http://localhost:8083/api/orchestration/user/1/orders
+curl http://localhost:8083/orchest.svc/api/v1/orchestration/user/1/orders
 
 # Get user orders by username
-curl http://localhost:8083/api/orchestration/username/john/orders
+curl http://localhost:8083/orchest.svc/api/v1/orchestration/username/john/orders
 ```
 
 ## Response Format
