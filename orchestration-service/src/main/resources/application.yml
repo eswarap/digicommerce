@@ -1,0 +1,12 @@
+server:
+  port: 8083
+  servlet:
+    context-path: /orchest.svc/api/v1
+
+services:
+  user:
+    url: http://localhost:8081/user.svc/api/v1
+  order:
+    url: http://localhost:8082/order.svc/api/v1
+  token:
+    url: http://localhost:8090/token.svc/api/v1

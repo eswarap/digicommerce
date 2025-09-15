@@ -1,0 +1,19 @@
+@echo off
+echo Killing Spring Boot applications...
+
+echo Killing processes on port 8080 (Token Service)...
+for /f "tokens=5" %%a in ('netstat -aon ^| find ":8080" ^| find "LISTENING"') do taskkill /f /pid %%a 2>nul
+
+echo Killing processes on port 8081 (User Service)...
+for /f "tokens=5" %%a in ('netstat -aon ^| find ":8081" ^| find "LISTENING"') do taskkill /f /pid %%a 2>nul
+
+echo Killing processes on port 8082 (Order Service)...
+for /f "tokens=5" %%a in ('netstat -aon ^| find ":8082" ^| find "LISTENING"') do taskkill /f /pid %%a 2>nul
+
+echo Killing processes on port 8083 (Orchestration Service)...
+for /f "tokens=5" %%a in ('netstat -aon ^| find ":8083" ^| find "LISTENING"') do taskkill /f /pid %%a 2>nul
+
+echo Killing processes on port 8090 (Token Service Alt)...
+for /f "tokens=5" %%a in ('netstat -aon ^| find ":8090" ^| find "LISTENING"') do taskkill /f /pid %%a 2>nul
+
+echo All Spring Boot services stopped.

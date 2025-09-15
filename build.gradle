@@ -1,0 +1,60 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.0' apply false
+    id 'io.spring.dependency-management' version '1.1.4' apply false
+}
+
+allprojects {
+    group = 'org.woven.digicommerce'
+    version = '1.0.0'
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+
+    java {
+        sourceCompatibility = '17'
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter'
+        implementation 'org.springframework.boot:spring-boot-starter-web'
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+    }
+}
+
+tasks.register('runAllServices') {
+    dependsOn 'runTokenService', 'runUserService', 'runOrderService', 'runOrchestrationService'
+    // Ensures tasks run in order
+    tasks.runUserService.mustRunAfter tasks.runTokenService
+    tasks.runOrderService.mustRunAfter tasks.runUserService
+    tasks.runOrchestrationService.mustRunAfter tasks.runOrderService
+}
+
+tasks.register('runTokenService') {
+    dependsOn ':token-service:bootRun'
+}
+
+tasks.register('runUserService') {
+    dependsOn ':user-service:bootRun'
+}
+
+tasks.register('runOrderService') {
+    dependsOn ':order-service:bootRun'
+}
+
+tasks.register('runOrchestrationService') {
+    dependsOn ':orchestration-service:bootRun'
+}

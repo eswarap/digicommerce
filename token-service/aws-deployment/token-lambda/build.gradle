@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'org.woven.digicommerce'
+version = '1.0.0'
+sourceCompatibility = '22'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.amazonaws:aws-lambda-java-core:1.2.3'
+    implementation 'com.amazonaws:aws-lambda-java-events:3.11.4'
+    implementation 'software.amazon.awssdk:dynamodb:2.21.29'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.0'
+}
+
+shadowJar {
+    archiveBaseName = 'token-lambda'
+    archiveClassifier = ''
+}
+
+build.dependsOn shadowJar

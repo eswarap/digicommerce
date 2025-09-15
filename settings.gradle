@@ -1,0 +1,6 @@
+rootProject.name = 'digicommerce'
+
+include 'orchestration-service'
+include 'user-service'
+include 'order-service'
+include 'token-service'

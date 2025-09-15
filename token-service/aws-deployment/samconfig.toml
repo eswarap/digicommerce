@@ -1,0 +1,10 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "token-notification-services"
+s3_bucket = ""
+s3_prefix = "token-notification-services"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = ""
+confirm_changeset = true

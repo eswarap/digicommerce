@@ -1,0 +1,83 @@
+# Build directories
+build/
+*/build/
+**/build/
+
+# Gradle files
+.gradle/
+*/.gradle/
+**/.gradle/
+
+# IDE files
+.idea/
+*/.idea/
+**/.idea/
+*.iml
+*.iws
+*.ipr
+*.ipr
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Java compiled files
+*.class
+target/
+out/
+
+# Test reports
+**/build/reports/
+**/build/test-results/
+**/build/tmp/
+
+# JAR/WAR/EAR files (except wrapper)
+*.jar
+*.war
+*.ear
+!gradle/wrapper/gradle-wrapper.jar
+
+# Package files
+*.tar.gz
+*.zip
+
+# Application specific
+application-local.yml
+application-dev.yml
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Dependency directories
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache directories
+.cache/
+*.cache
