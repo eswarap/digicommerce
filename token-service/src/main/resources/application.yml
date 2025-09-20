@@ -2,6 +2,9 @@ server:
   port: 8090
   servlet:
     context-path: /token.svc/api/v1
+
+app:
+  log-path: ${user.home}\digicommerce\logs\token-service
 spring:
   datasource:
     url: jdbc:h2:mem:tokendb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE

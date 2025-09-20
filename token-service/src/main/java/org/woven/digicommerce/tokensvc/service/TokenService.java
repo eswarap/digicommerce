@@ -39,14 +39,14 @@ public class TokenService {
     public boolean validateToken(String token) {
         try {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
-            return tokenRepository.findByTokenAndRevokedFalse(token).isPresent();
+            return tokenRepository.findFirstByTokenAndRevokedFalse(token).isPresent();
         } catch (Exception e) {
             return false;
         }
     }
     
     public void revokeToken(String token) {
-        tokenRepository.findByTokenAndRevokedFalse(token)
+        tokenRepository.findFirstByTokenAndRevokedFalse(token)
                 .ifPresent(t -> {
                     t.setRevoked(true);
                     tokenRepository.save(t);

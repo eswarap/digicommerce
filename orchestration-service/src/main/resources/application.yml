@@ -3,6 +3,9 @@ server:
   servlet:
     context-path: /orchest.svc/api/v1
 
+app:
+  log-path: ${user.home}\digicommerce\logs\orchestration-service
+
 services:
   user:
     url: http://localhost:8081/user.svc/api/v1

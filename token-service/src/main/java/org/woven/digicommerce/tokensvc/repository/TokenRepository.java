@@ -6,5 +6,5 @@ import org.woven.digicommerce.tokensvc.entity.Token;
 import java.util.Optional;
 
 public interface TokenRepository extends JpaRepository<Token, Long> {
-    Optional<Token> findByTokenAndRevokedFalse(String token);
+    Optional<Token> findFirstByTokenAndRevokedFalse(String token);
 }

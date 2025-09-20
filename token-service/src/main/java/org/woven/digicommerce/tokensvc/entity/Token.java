@@ -1,5 +1,6 @@
 package org.woven.digicommerce.tokensvc.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -17,6 +18,7 @@ public class Token {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
+    @Column(unique = true)
     private String token;
     private String username;
     private LocalDateTime expiresAt;

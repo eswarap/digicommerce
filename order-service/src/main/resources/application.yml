@@ -3,6 +3,9 @@ server:
   servlet:
     context-path: /order.svc/api/v1
 
+app:
+  log-path: ${user.home}\digicommerce\logs\order-service
+
 services:
   token:
     url: http://localhost:8090/token.svc/api/v1
