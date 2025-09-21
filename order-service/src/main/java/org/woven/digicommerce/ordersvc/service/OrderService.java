@@ -1,6 +1,9 @@
 package org.woven.digicommerce.ordersvc.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.woven.digicommerce.ordersvc.entity.Order;
 import org.woven.digicommerce.ordersvc.repository.OrderRepository;
 
@@ -8,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class OrderService {
     private final OrderRepository orderRepository;
     
@@ -15,24 +19,32 @@ public class OrderService {
         this.orderRepository = orderRepository;
     }
     
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+    public Page<Order> getAllOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable);
     }
     
     public Optional<Order> getOrderById(Long id) {
         return orderRepository.findById(id);
     }
     
-    public List<Order> getOrdersByUser(Long userId) {
-        return orderRepository.findByUserId(userId);
+    public Page<Order> getOrdersByUser(Long userId, Pageable pageable) {
+        return orderRepository.findByUserId(userId, pageable);
     }
     
-    public List<Order> getOrdersByStatus(String status) {
-        return orderRepository.findByStatus(status);
+    public Page<Order> getOrdersByStatus(String status, Pageable pageable) {
+        return orderRepository.findByStatus(status, pageable);
+    }
+    
+    public Page<Order> getOrdersByUserAndStatus(Long userId, String status, Pageable pageable) {
+        return orderRepository.findByUserIdAndStatus(userId, status, pageable);
     }
     
     public Order createOrder(Order order) {
         return orderRepository.save(order);
+    }
+    
+    public List<Order> createOrders(List<Order> orders) {
+        return orderRepository.saveAll(orders);
     }
     
     public Order updateOrderStatus(Long id, String status) {

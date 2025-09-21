@@ -1,6 +1,9 @@
 package org.woven.digicommerce.userservice.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.woven.digicommerce.userservice.entity.User;
 import org.woven.digicommerce.userservice.repository.UserRepository;
 
@@ -8,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class UserService {
     private final UserRepository userRepository;
     
@@ -15,8 +19,8 @@ public class UserService {
         this.userRepository = userRepository;
     }
     
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public Page<User> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable);
     }
     
     public Optional<User> getUserById(Long id) {
@@ -32,6 +36,10 @@ public class UserService {
             throw new RuntimeException("Username already exists");
         }
         return userRepository.save(user);
+    }
+    
+    public List<User> createUsers(List<User> users) {
+        return userRepository.saveAll(users);
     }
     
     public User updateUser(Long id, User user) {

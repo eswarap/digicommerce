@@ -1,5 +1,7 @@
 package org.woven.digicommerce.userservice.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.woven.digicommerce.userservice.entity.User;
 import org.woven.digicommerce.userservice.service.UserService;
@@ -23,20 +26,20 @@ public class UserController {
         this.userService = userService;
     }
     
-    @GetMapping("/all")
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    @GetMapping
+    public Page<User> getUsers(Pageable pageable) {
+        return userService.getAllUsers(pageable);
     }
     
-    @GetMapping("/userid/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
     
-    @GetMapping("/username/{username}")
-    public ResponseEntity<User> getUserByUsername(@PathVariable String username) {
+    @GetMapping("/search")
+    public ResponseEntity<User> getUserByUsername(@RequestParam String username) {
         return userService.getUserByUsername(username)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -45,6 +48,11 @@ public class UserController {
     @PostMapping
     public User createUser(@RequestBody User user) {
         return userService.createUser(user);
+    }
+    
+    @PostMapping("/batch")
+    public List<User> createUsers(@RequestBody List<User> users) {
+        return userService.createUsers(users);
     }
     
     @PutMapping("/{id}")

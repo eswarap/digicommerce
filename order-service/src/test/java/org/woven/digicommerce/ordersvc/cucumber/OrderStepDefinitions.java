@@ -14,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Random;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,16 +31,26 @@ public class OrderStepDefinitions {
     private Long orderId;
     private String token;
 
-    private String generateToken(String username) {
+    private String generateToken() {
+        String randomUser = "user" + generateRandomString(6);
         String tokenUrl = "http://localhost:8090/token.svc/api/v1/auth/login";
-        String loginJson = String.format("{\"username\":\"%s\",\"secret\":\"mySecretKeyForJWTTokenGeneration123456789\"}", username);
         
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> request = new HttpEntity<>(loginJson, headers);
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        HttpEntity<String> request = new HttpEntity<>(randomUser, headers);
 
         ResponseEntity<String> tokenResponse = restTemplate.postForEntity(tokenUrl, request, String.class);
         return tokenResponse.getStatusCode() == HttpStatus.OK ? tokenResponse.getBody() : null;
+    }
+    
+    private String generateRandomString(int length) {
+        String chars = "abcdefghijklmnopqrstuvwxyz";
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     @Given("the order service is running")
@@ -52,7 +64,7 @@ public class OrderStepDefinitions {
         String orderJson = String.format("{\"userId\":%d,\"productName\":\"%s\",\"quantity\":%d,\"price\":%.2f}",
                                        userId, product, quantity, price);
         
-        token = generateToken("testuser");
+        token = generateToken();
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

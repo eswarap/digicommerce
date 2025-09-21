@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.woven.digicommerce.userservice.entity.User;
 
 import java.util.List;
+import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -34,16 +35,26 @@ public class UserStepDefinitions {
     private Long userId;
     private String token;
 
-    private String generateToken(String username) {
+    private String generateToken() {
+        String randomUser = "user" + generateRandomString(6);
         String tokenUrl = "http://localhost:8090/token.svc/api/v1/auth/login";
-        String loginJson = String.format("{\"username\":\"%s\",\"secret\":\"mySecretKeyForJWTTokenGeneration123456789\"}", username);
         
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> request = new HttpEntity<>(loginJson, headers);
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        HttpEntity<String> request = new HttpEntity<>(randomUser, headers);
 
         ResponseEntity<String> tokenResponse = restTemplate.postForEntity(tokenUrl, request, String.class);
         return tokenResponse.getStatusCode() == HttpStatus.OK ? tokenResponse.getBody() : null;
+    }
+    
+    private String generateRandomString(int length) {
+        String chars = "abcdefghijklmnopqrstuvwxyz";
+        Random random = new Random();
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     @Given("the user service is running")
@@ -56,7 +67,7 @@ public class UserStepDefinitions {
         String url = "http://localhost:" + port + "/user.svc/api/v1/users";
         User user = new User(username, email, firstName, lastName);
         
-        token = generateToken(username);
+        token = generateToken();
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -92,7 +103,7 @@ public class UserStepDefinitions {
             headers.set("Authorization", "Bearer " + token);
         }
         HttpEntity<User> request = new HttpEntity<>(headers);
-        usersResponse = restTemplate.exchange(url, HttpMethod.GET, request, new ParameterizedTypeReference<List<User>>(){});
+        usersResponse = restTemplate.exchange(url, HttpMethod.GET, request, new ParameterizedTypeReference<>(){});
     }
 
     @Then("I should receive a list of users")
