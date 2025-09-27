@@ -1,0 +1,337 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'DigiCommerce Platform - ECS Services'
+
+Parameters:
+  InfrastructureStackName:
+    Type: String
+    Default: 'digicommerce-infrastructure'
+    Description: Name of the infrastructure stack
+
+Resources:
+  # ECS Task Execution Role
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  # Target Groups
+  UserServiceTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: user-service-tg
+      Port: 8081
+      Protocol: HTTP
+      VpcId:
+        Fn::ImportValue: !Sub ${InfrastructureStackName}-VPC
+      TargetType: ip
+      HealthCheckPath: /user.svc/actuator/health
+
+  OrderServiceTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: order-service-tg
+      Port: 8082
+      Protocol: HTTP
+      VpcId:
+        Fn::ImportValue: !Sub ${InfrastructureStackName}-VPC
+      TargetType: ip
+      HealthCheckPath: /order.svc/actuator/health
+
+  TokenServiceTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: token-service-tg
+      Port: 8090
+      Protocol: HTTP
+      VpcId:
+        Fn::ImportValue: !Sub ${InfrastructureStackName}-VPC
+      TargetType: ip
+      HealthCheckPath: /token.svc/actuator/health
+
+  OrchestrationServiceTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: orchestration-service-tg
+      Port: 8083
+      Protocol: HTTP
+      VpcId:
+        Fn::ImportValue: !Sub ${InfrastructureStackName}-VPC
+      TargetType: ip
+      HealthCheckPath: /orchest.svc/actuator/health
+
+  # ALB Listener
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref OrchestrationServiceTargetGroup
+      LoadBalancerArn:
+        Fn::ImportValue: !Sub ${InfrastructureStackName}-ALB
+      Port: 80
+      Protocol: HTTP
+
+  # ALB Listener Rules
+  UserServiceListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref UserServiceTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values: ['/user.svc/*']
+      ListenerArn: !Ref ALBListener
+      Priority: 1
+
+  OrderServiceListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref OrderServiceTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values: ['/order.svc/*']
+      ListenerArn: !Ref ALBListener
+      Priority: 2
+
+  TokenServiceListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref TokenServiceTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values: ['/token.svc/*']
+      ListenerArn: !Ref ALBListener
+      Priority: 3
+
+  # Task Definitions
+  UserServiceTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: user-service
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      Cpu: 256
+      Memory: 512
+      ExecutionRoleArn: !Ref ECSTaskExecutionRole
+      ContainerDefinitions:
+        - Name: user-service
+          Image: !Sub
+            - '${RepoUri}:latest'
+            - RepoUri:
+                Fn::ImportValue: !Sub ${InfrastructureStackName}-UserServiceRepo
+          PortMappings:
+            - ContainerPort: 8081
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref UserServiceLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  OrderServiceTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: order-service
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      Cpu: 256
+      Memory: 512
+      ExecutionRoleArn: !Ref ECSTaskExecutionRole
+      ContainerDefinitions:
+        - Name: order-service
+          Image: !Sub
+            - '${RepoUri}:latest'
+            - RepoUri:
+                Fn::ImportValue: !Sub ${InfrastructureStackName}-OrderServiceRepo
+          PortMappings:
+            - ContainerPort: 8082
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref OrderServiceLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  TokenServiceTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: token-service
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      Cpu: 256
+      Memory: 512
+      ExecutionRoleArn: !Ref ECSTaskExecutionRole
+      ContainerDefinitions:
+        - Name: token-service
+          Image: !Sub
+            - '${RepoUri}:latest'
+            - RepoUri:
+                Fn::ImportValue: !Sub ${InfrastructureStackName}-TokenServiceRepo
+          PortMappings:
+            - ContainerPort: 8090
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref TokenServiceLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  OrchestrationServiceTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: orchestration-service
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      Cpu: 256
+      Memory: 512
+      ExecutionRoleArn: !Ref ECSTaskExecutionRole
+      ContainerDefinitions:
+        - Name: orchestration-service
+          Image: !Sub
+            - '${RepoUri}:latest'
+            - RepoUri:
+                Fn::ImportValue: !Sub ${InfrastructureStackName}-OrchestrationServiceRepo
+          PortMappings:
+            - ContainerPort: 8083
+          Environment:
+            - Name: USER_SERVICE_URL
+              Value: http://user-service.digicommerce.local:8081
+            - Name: ORDER_SERVICE_URL
+              Value: http://order-service.digicommerce.local:8082
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref OrchestrationServiceLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+
+  # ECS Services
+  UserService:
+    Type: AWS::ECS::Service
+    DependsOn: UserServiceListenerRule
+    Properties:
+      ServiceName: user-service
+      Cluster:
+        Fn::ImportValue: !Sub ${InfrastructureStackName}-ECSCluster
+      TaskDefinition: !Ref UserServiceTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - Fn::ImportValue: !Sub ${InfrastructureStackName}-ECSSecurityGroup
+          Subnets:
+            Fn::Split:
+              - ','
+              - Fn::ImportValue: !Sub ${InfrastructureStackName}-PublicSubnets
+      LoadBalancers:
+        - ContainerName: user-service
+          ContainerPort: 8081
+          TargetGroupArn: !Ref UserServiceTargetGroup
+
+  OrderService:
+    Type: AWS::ECS::Service
+    DependsOn: OrderServiceListenerRule
+    Properties:
+      ServiceName: order-service
+      Cluster:
+        Fn::ImportValue: !Sub ${InfrastructureStackName}-ECSCluster
+      TaskDefinition: !Ref OrderServiceTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - Fn::ImportValue: !Sub ${InfrastructureStackName}-ECSSecurityGroup
+          Subnets:
+            Fn::Split:
+              - ','
+              - Fn::ImportValue: !Sub ${InfrastructureStackName}-PublicSubnets
+      LoadBalancers:
+        - ContainerName: order-service
+          ContainerPort: 8082
+          TargetGroupArn: !Ref OrderServiceTargetGroup
+
+  TokenService:
+    Type: AWS::ECS::Service
+    DependsOn: TokenServiceListenerRule
+    Properties:
+      ServiceName: token-service
+      Cluster:
+        Fn::ImportValue: !Sub ${InfrastructureStackName}-ECSCluster
+      TaskDefinition: !Ref TokenServiceTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - Fn::ImportValue: !Sub ${InfrastructureStackName}-ECSSecurityGroup
+          Subnets:
+            Fn::Split:
+              - ','
+              - Fn::ImportValue: !Sub ${InfrastructureStackName}-PublicSubnets
+      LoadBalancers:
+        - ContainerName: token-service
+          ContainerPort: 8090
+          TargetGroupArn: !Ref TokenServiceTargetGroup
+
+  OrchestrationService:
+    Type: AWS::ECS::Service
+    DependsOn: ALBListener
+    Properties:
+      ServiceName: orchestration-service
+      Cluster:
+        Fn::ImportValue: !Sub ${InfrastructureStackName}-ECSCluster
+      TaskDefinition: !Ref OrchestrationServiceTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - Fn::ImportValue: !Sub ${InfrastructureStackName}-ECSSecurityGroup
+          Subnets:
+            Fn::Split:
+              - ','
+              - Fn::ImportValue: !Sub ${InfrastructureStackName}-PublicSubnets
+      LoadBalancers:
+        - ContainerName: orchestration-service
+          ContainerPort: 8083
+          TargetGroupArn: !Ref OrchestrationServiceTargetGroup
+
+  # CloudWatch Log Groups
+  UserServiceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/user-service
+      RetentionInDays: 7
+
+  OrderServiceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/order-service
+      RetentionInDays: 7
+
+  TokenServiceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/token-service
+      RetentionInDays: 7
+
+  OrchestrationServiceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/orchestration-service
+      RetentionInDays: 7
