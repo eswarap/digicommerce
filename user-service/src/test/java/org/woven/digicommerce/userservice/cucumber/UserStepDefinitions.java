@@ -1,9 +1,13 @@
 package org.woven.digicommerce.userservice.cucumber;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -16,7 +20,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.woven.digicommerce.userservice.entity.User;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,6 +30,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class UserStepDefinitions {
+    
+    private static final Logger log = LoggerFactory.getLogger(UserStepDefinitions.class);
 
     @LocalServerPort
     private int port;
@@ -36,22 +44,34 @@ public class UserStepDefinitions {
     private String token;
 
     private String generateToken() {
-        String randomUser = "user" + generateRandomString(6);
+        String randomUser = "user" + generateRandomString();
         String tokenUrl = "http://localhost:8090/token.svc/api/v1/auth/login";
+        String authJson = "{\"username\":\"" + randomUser + "\"}";
         
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        HttpEntity<String> request = new HttpEntity<>(randomUser, headers);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> request = new HttpEntity<>(authJson, headers);
 
         ResponseEntity<String> tokenResponse = restTemplate.postForEntity(tokenUrl, request, String.class);
-        return tokenResponse.getStatusCode() == HttpStatus.OK ? tokenResponse.getBody() : null;
+        return tokenResponse.getStatusCode() == HttpStatus.OK ? (tokenResponse.getBody() != null ? getToken(tokenResponse) : null) : null;
     }
-    
-    private String generateRandomString(int length) {
+
+    private String getToken(ResponseEntity tokenResponse) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            Map<String, String> map = mapper.readValue((String) tokenResponse.getBody(), new TypeReference<>() {});
+            return map.get("accessToken");
+        } catch (IOException e) {
+            log.error("Error parsing token response", e);
+        }
+        return null;
+    }
+
+    private String generateRandomString() {
         String chars = "abcdefghijklmnopqrstuvwxyz";
         Random random = new Random();
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < 6; i++) {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
         return sb.toString();

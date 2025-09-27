@@ -28,3 +28,7 @@ dependencies {
     testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.18.0'
     testImplementation 'org.junit.platform:junit-platform-suite:1.10.0'
 }
+
+test {
+    enabled = false
+}

@@ -5,6 +5,13 @@ server:
 
 app:
   log-path: ${user.home}\digicommerce\logs\token-service
+
+aws:
+  region: us-east-1
+  enabled: true
+
+jwt:
+  secret: mySecretKeyForJWTTokenGeneration123456789012
 spring:
   datasource:
     url: jdbc:h2:mem:tokendb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE

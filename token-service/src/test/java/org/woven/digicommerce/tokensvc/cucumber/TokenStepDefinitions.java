@@ -40,17 +40,18 @@ public class TokenStepDefinitions {
     public void iLoginWithUsernameAndSecret(String username, String secret) {
         String randomUser = "user" + generateRandomString();
         String url = "http://localhost:" + port + "/token.svc/api/v1/auth/login";
+        String authJson = "{\"username\":\"" + randomUser + "\"}";
         
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        HttpEntity<String> request = new HttpEntity<>(randomUser, headers);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> request = new HttpEntity<>(authJson, headers);
         response = restTemplate.postForEntity(url, request, Map.class);
 
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-            Object responseBody = response.getBody();
-            if (responseBody instanceof Map) {
+            Map<String, String> responseBody = response.getBody();
+            if (responseBody != null) {
                 @SuppressWarnings("unchecked")
-                Map<String, String> body = (Map<String, String>) responseBody;
+                Map<String, String> body = responseBody;
                 token = body.get("accessToken");
             }
         }

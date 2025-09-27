@@ -34,13 +34,18 @@ public class OrderStepDefinitions {
     private String generateToken() {
         String randomUser = "user" + generateRandomString(6);
         String tokenUrl = "http://localhost:8090/token.svc/api/v1/auth/login";
+        String authJson = "{\"username\":\"" + randomUser + "\"}";
         
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
-        HttpEntity<String> request = new HttpEntity<>(randomUser, headers);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> request = new HttpEntity<>(authJson, headers);
 
         ResponseEntity<String> tokenResponse = restTemplate.postForEntity(tokenUrl, request, String.class);
-        return tokenResponse.getStatusCode() == HttpStatus.OK ? tokenResponse.getBody() : null;
+        if (tokenResponse.getStatusCode() == HttpStatus.OK && tokenResponse.getBody().contains("accessToken")) {
+            String body = tokenResponse.getBody();
+            return body.substring(body.indexOf("\"accessToken\":\"") + 14, body.indexOf("\"", body.indexOf("\"accessToken\":\"") + 14));
+        }
+        return null;
     }
     
     private String generateRandomString(int length) {
