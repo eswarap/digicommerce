@@ -44,13 +44,26 @@ jobs:
       with:
         registry-type: public
 
+    - name: Deploy infrastructure if not exists
+      run: |
+        if ! aws cloudformation describe-stacks --stack-name digicommerce-infrastructure --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
+          echo "Infrastructure stack not found, deploying..."
+          aws cloudformation deploy \
+            --template-file aws-deployment/infrastructure.yaml \
+            --stack-name digicommerce-infrastructure \
+            --region ${{ env.AWS_REGION }} \
+            --capabilities CAPABILITY_IAM
+        else
+          echo "Infrastructure stack already exists"
+        fi
+
     - name: Get ECR repository URIs
       id: ecr-uris
       run: |
-        USER_REPO=$(aws cloudformation describe-stacks --stack-name digicommerce-infrastructure --query "Stacks[0].Outputs[?OutputKey=='UserServiceRepository'].OutputValue" --output text)
-        ORDER_REPO=$(aws cloudformation describe-stacks --stack-name digicommerce-infrastructure --query "Stacks[0].Outputs[?OutputKey=='OrderServiceRepository'].OutputValue" --output text)
-        TOKEN_REPO=$(aws cloudformation describe-stacks --stack-name digicommerce-infrastructure --query "Stacks[0].Outputs[?OutputKey=='TokenServiceRepository'].OutputValue" --output text)
-        ORCHESTRATION_REPO=$(aws cloudformation describe-stacks --stack-name digicommerce-infrastructure --query "Stacks[0].Outputs[?OutputKey=='OrchestrationServiceRepository'].OutputValue" --output text)
+        USER_REPO=$(aws cloudformation describe-stacks --stack-name digicommerce-infrastructure --query "Stacks[0].Outputs[?OutputKey=='UserServiceRepository'].OutputValue" --output text --region ${{ env.AWS_REGION }})
+        ORDER_REPO=$(aws cloudformation describe-stacks --stack-name digicommerce-infrastructure --query "Stacks[0].Outputs[?OutputKey=='OrderServiceRepository'].OutputValue" --output text --region ${{ env.AWS_REGION }})
+        TOKEN_REPO=$(aws cloudformation describe-stacks --stack-name digicommerce-infrastructure --query "Stacks[0].Outputs[?OutputKey=='TokenServiceRepository'].OutputValue" --output text --region ${{ env.AWS_REGION }})
+        ORCHESTRATION_REPO=$(aws cloudformation describe-stacks --stack-name digicommerce-infrastructure --query "Stacks[0].Outputs[?OutputKey=='OrchestrationServiceRepository'].OutputValue" --output text --region ${{ env.AWS_REGION }})
         
         echo "user-repo=$USER_REPO" >> $GITHUB_OUTPUT
         echo "order-repo=$ORDER_REPO" >> $GITHUB_OUTPUT
@@ -78,10 +91,31 @@ jobs:
         docker build -t ${{ steps.ecr-uris.outputs.orchestration-repo }}:$IMAGE_TAG -f Dockerfile --build-arg SERVICE_PATH=orchestration-service .
         docker push ${{ steps.ecr-uris.outputs.orchestration-repo }}:$IMAGE_TAG
 
+    - name: Deploy ECS services if not exists
+      run: |
+        if ! aws cloudformation describe-stacks --stack-name digicommerce-services --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
+          echo "Services stack not found, deploying..."
+          aws cloudformation deploy \
+            --template-file aws-deployment/services.yaml \
+            --stack-name digicommerce-services \
+            --parameter-overrides InfrastructureStackName=digicommerce-infrastructure \
+            --region ${{ env.AWS_REGION }} \
+            --capabilities CAPABILITY_IAM
+        else
+          echo "Services stack already exists"
+        fi
+
     - name: Update ECS services
       run: |
-        # Force new deployment of ECS services to pick up new images
-        aws ecs update-service --cluster digicommerce-cluster --service user-service --force-new-deployment
-        aws ecs update-service --cluster digicommerce-cluster --service order-service --force-new-deployment
-        aws ecs update-service --cluster digicommerce-cluster --service token-service --force-new-deployment
-        aws ecs update-service --cluster digicommerce-cluster --service orchestration-service --force-new-deployment
+        # Check if services exist and update them
+        CLUSTER_NAME="DigiCommerce-Cluster"
+        SERVICES=("user-service" "order-service" "token-service" "orchestration-service")
+        
+        for service in "${SERVICES[@]}"; do
+          if aws ecs describe-services --cluster $CLUSTER_NAME --services $service --query 'services[0].status' --output text --region ${{ env.AWS_REGION }} 2>/dev/null | grep -q "ACTIVE"; then
+            echo "Updating $service..."
+            aws ecs update-service --cluster $CLUSTER_NAME --service $service --force-new-deployment --region ${{ env.AWS_REGION }}
+          else
+            echo "Service $service not found or not active, skipping update"
+          fi
+        done

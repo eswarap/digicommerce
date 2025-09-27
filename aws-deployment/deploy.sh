@@ -99,19 +99,7 @@ echo "- Token: $TOKEN_REPO"
 echo "- Orchestration: $ORCHESTRATION_REPO"
 
 echo
-echo "Step 4: GitHub Actions setup complete"
-echo "Push to GitHub main branch to trigger automated build and deployment"
-echo "GitHub Actions will:"
-echo "  1. Build JAR files with Gradle"
-echo "  2. Build and push Docker images to ECR"
-echo "  3. Update ECS services with new images"
-echo
-echo "Required GitHub Secrets:"
-echo "  - AWS_ACCESS_KEY_ID"
-echo "  - AWS_SECRET_ACCESS_KEY"
-
-echo
-echo "Step 5: Deploying services..."
+echo "Step 4: Deploying ECS services..."
 if ! aws cloudformation deploy \
     --template-file aws-deployment/services.yaml \
     --stack-name $SERVICES_STACK \
@@ -121,6 +109,18 @@ if ! aws cloudformation deploy \
     echo "ERROR: Services deployment failed"
     exit 1
 fi
+
+echo
+echo "Step 5: GitHub Actions setup complete"
+echo "Push to GitHub main branch to trigger automated build and deployment"
+echo "GitHub Actions will:"
+echo "  1. Build JAR files with Gradle"
+echo "  2. Build and push Docker images to ECR"
+echo "  3. Update ECS services with new images"
+echo
+echo "Required GitHub Secrets:"
+echo "  - AWS_ACCESS_KEY_ID"
+echo "  - AWS_SECRET_ACCESS_KEY"
 
 echo
 echo "Step 6: Getting ALB URL..."
